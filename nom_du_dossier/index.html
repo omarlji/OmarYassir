@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bibliotheca - Smart Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <section id="login-section" class="d-flex align-items-center justify-content-center vh-100 bg-dark">
+        <div class="card p-4 shadow-lg" style="width: 350px;">
+            <div class="text-center mb-4">
+                <i class="fas fa-user-lock fa-3x text-primary mb-2"></i>
+                <h3 class="fw-bold">Connexion</h3>
+                <p class="text-muted small">Espace Administration</p>
+            </div>
+            <form id="loginForm">
+                <div class="mb-3">
+                    <label class="form-label small">Email</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="admin@emsi.ma" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small">Mot de passe</label>
+                    <input type="password" id="loginPass" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 fw-bold">Se connecter</button>
+            </form>
+            <div id="loginError" class="text-danger small mt-2 text-center d-none">Identifiants incorrects !</div>
+        </div>
+    </section>
+
+    <div id="zone-alerte" style="position: fixed; top: 20px; right: 20px; z-index: 9999;"></div>
+
+    <div class="d-flex d-none" id="wrapper">
+        <nav class="bg-dark text-white p-3 d-flex flex-column" id="sidebar">
+            <div class="text-center py-4">
+                <i class="fas fa-book-reader fa-3x mb-2 text-primary"></i>
+                <h3 class="fw-bold">Bibliotheca</h3>
+            </div>
+            <ul class="nav flex-column mb-auto">
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link text-white active" onclick="afficherSection('dashboard')">
+                        <i class="fas fa-chart-line me-2"></i> Dashboard
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link text-white" onclick="afficherSection('books')">
+                        <i class="fas fa-book me-2"></i> Gestion Livres
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link text-white" onclick="afficherSection('authors')">
+                        <i class="fas fa-user-pen me-2"></i> Auteurs
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link text-white" onclick="afficherSection('publishers')">
+                        <i class="fas fa-building me-2"></i> Éditions
+                    </a>
+                </li>
+                <li class="nav-item mb-2">
+                    <a href="#" class="nav-link text-white" onclick="afficherSection('loans')">
+                        <i class="fas fa-hand-holding-heart me-2"></i> Emprunts
+                    </a>
+                </li>
+            </ul>
+            <hr>
+            <button class="btn btn-outline-danger w-100 fw-bold mb-3" onclick="deconnexion()">
+                <i class="fas fa-sign-out-alt me-2"></i> Déconnexion
+            </button>
+        </nav>
+
+        <div id="page-content-wrapper" class="w-100 bg-light">
+            <nav class="navbar navbar-expand-lg navbar-light bg-white px-4 shadow-sm">
+                <span class="navbar-brand fw-bold text-secondary">Smart Backoffice - Dashboard</span>
+            </nav>
+
+            <div class="container-fluid p-4">
+                <section id="dashboard-section" class="app-section">
+                    <h2 class="mb-4 fw-bold">Vue d'ensemble</h2>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="card text-white bg-primary p-4 border-0 shadow">
+                                <h6 class="text-uppercase small">Total Livres</h6>
+                                <h2 id="kpi-books" class="fw-bold">0</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-success p-4 border-0 shadow">
+                                <h6 class="text-uppercase small">Total Auteurs</h6>
+                                <h2 id="kpi-authors" class="fw-bold">0</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-warning p-4 border-0 shadow">
+                                <h6 class="text-uppercase small">Emprunts actifs</h6>
+                                <h2 id="kpi-loans" class="fw-bold">0</h2>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card text-white bg-info p-4 border-0 shadow">
+                                <h6 class="text-uppercase small">Référence API</h6>
+                                <h2 id="kpi-api" class="fw-bold">...</h2>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                      <div class="col-md-6">
+                        <div class="card p-4 border-0 shadow">
+                          <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                              <h5 class="mb-1 fw-bold">Project progress</h5>
+                              <p class="mb-0 text-muted small">Books status (Library)</p>
+                            </div>
+                          </div>
+                          <div style="height:260px; display:flex; align-items:center; justify-content:center;">
+                            <canvas id="chartProgress" height="180"></canvas>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="col-md-6">
+                        <div class="card p-4 border-0 shadow">
+                          <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                              <h5 class="mb-1 fw-bold">Nombres de livres par auteurs</h5>
+                              <p class="mb-0 text-muted small"></p>
+                            </div>
+                          </div>
+                          <div style="height:260px;">
+                            <canvas id="chartLoanStatus" height="180"></canvas>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="card p-4 border-0 shadow">
+                        <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Statistiques de la collection</h5>
+                        <canvas id="myChart" height="100"></canvas>
+                    </div>
+                </section>
+
+                <section id="books-section" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="fw-bold">Gestion des Livres</h2>
+
+                        <div class="d-flex gap-2">
+                            <button id="sortBooksBtn" class="btn btn-outline-secondary fw-bold" onclick="toggleSort('books')">
+                                <i class="fas fa-sort-alpha-down me-2"></i>A→Z
+                            </button>
+
+                            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#bookModal">
+                                <i class="fas fa-plus-circle me-2"></i>Nouveau Livre
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group mb-3 shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="searchBar" class="form-control border-start-0" placeholder="Rechercher un livre...">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover shadow-sm bg-white rounded overflow-hidden">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Auteur</th>
+                                    <th>Éditeur / Date</th>
+                                    <th>Stock</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="booksList"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="authors-section" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="fw-bold">Gestion des Auteurs</h2>
+
+                        <div class="d-flex gap-2">
+                            <button id="sortAuthorsBtn" class="btn btn-outline-secondary fw-bold" onclick="toggleSort('authors')">
+                                <i class="fas fa-sort-alpha-down me-2"></i>A→Z
+                            </button>
+
+                            <button class="btn btn-success fw-bold" data-bs-toggle="modal" data-bs-target="#authorModal">
+                                <i class="fas fa-user-plus me-2"></i>Nouvel Auteur
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card border-0 shadow-sm p-3">
+                        <ul class="list-group list-group-flush" id="authorsList"></ul>
+                    </div>
+                </section>
+
+                <section id="publishers-section" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="fw-bold">Maisons d'Édition</h2>
+
+                        <div class="d-flex gap-2">
+                            <button id="sortPublishersBtn" class="btn btn-outline-secondary fw-bold" onclick="toggleSort('publishers')">
+                                <i class="fas fa-sort-alpha-down me-2"></i>A→Z
+                            </button>
+
+                            <button class="btn btn-info text-white fw-bold" data-bs-toggle="modal" data-bs-target="#publisherModal">
+                                <i class="fas fa-building me-2"></i>Nouvel Éditeur
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="input-group mb-3 shadow-sm">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" id="searchPublisher" class="form-control border-start-0" placeholder="Rechercher un éditeur...">
+                    </div>
+                    <div class="row g-3" id="publishersList"></div>
+                </section>
+
+                <section id="loans-section" class="app-section d-none">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="fw-bold">Livres Empruntés</h2>
+                        <button class="btn btn-warning text-white fw-bold" data-bs-toggle="modal" data-bs-target="#loanModal">
+                            <i class="fas fa-calendar-plus me-2"></i>Nouvel Emprunt
+                        </button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover shadow-sm bg-white rounded overflow-hidden">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Livre</th>
+                                    <th>Emprunteur</th>
+                                    <th>Date Emprunt</th>
+                                    <th>Retour Prévu</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loansList"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="bookModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-body p-0">
+                    <div class="custom-form-card shadow-none m-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="form-title mb-0">Ajouter un nouveau livre 📚</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="bookForm" class="row g-4">
+                            <div class="col-md-12">
+                                <label class="custom-label">Titre du livre*</label>
+                                <input type="text" id="bookTitle" class="custom-input" placeholder="Entrez le titre" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Auteur*</label>
+                                <select id="bookAuthor" class="custom-input" required>
+                                    <option value="">Choisir un auteur...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Date de Publication*</label>
+                                <input type="number" id="bookDate" class="custom-input" min="1000" max="2026"required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Maison d'Édition</label>
+                                <select id="bookEditor" class="custom-input">
+                                    <option value="">Choisir un éditeur...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Quantité en stock*</label>
+                                <input type="number" id="bookStock" class="custom-input" placeholder="Ex: 10" min="0" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="custom-label">Description courte</label>
+                                <input type="text" id="bookDesc" class="custom-input" placeholder="Résumé rapide">
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn-plezi">Enregistrer le livre</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="authorModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body p-0">
+                    <div class="custom-form-card shadow-none m-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="form-title mb-0">Enregistrer un auteur ✍️</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="authorForm" class="row g-4">
+                            <div class="col-md-12">
+                                <label class="custom-label">Nom complet*</label>
+                                <input type="text" id="authorName" class="custom-input" placeholder="Ex: Victor Hugo" required>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="custom-label">Nationalité</label>
+                                <select id="authorNation" class="custom-input">
+                                    <option value="">Sélectionner un pays</option>
+                                    <option value="Afghane">Afghanistan</option>
+                                    <option value="Albanaise">Albanie</option>
+                                    <option value="Algérienne">Algérie</option>
+                                    <option value="Allemande">Allemagne</option>
+                                    <option value="Américaine">États-Unis</option>
+                                    <option value="Andorrane">Andorre</option>
+                                    <option value="Angolaise">Angola</option>
+                                    <option value="Antiguaise-et-Barbudienne">Antigua-et-Barbuda</option>
+                                    <option value="Saoudienne">Arabie saoudite</option>
+                                    <option value="Argentine">Argentine</option>
+                                    <option value="Arménienne">Arménie</option>
+                                    <option value="Australienne">Australie</option>
+                                    <option value="Autrichienne">Autriche</option>
+                                    <option value="Azerbaïdjanaise">Azerbaïdjan</option>
+                                    <option value="Bahamienne">Bahamas</option>
+                                    <option value="Bahreïnienne">Bahreïn</option>
+                                    <option value="Bangladaise">Bangladesh</option>
+                                    <option value="Barbadienne">Barbade</option>
+                                    <option value="Belge">Belgique</option>
+                                    <option value="Bélizienne">Belize</option>
+                                    <option value="Béninoise">Bénin</option>
+                                    <option value="Bhoutanaise">Bhoutan</option>
+                                    <option value="Biélorusse">Biélorussie</option>
+                                    <option value="Birmane">Birmanie</option>
+                                    <option value="Bolivienne">Bolivie</option>
+                                    <option value="Bosnienne">Bosnie-Herzégovine</option>
+                                    <option value="Botswanaise">Botswana</option>
+                                    <option value="Brésilienne">Brésil</option>
+                                    <option value="Brunéienne">Brunéi</option>
+                                    <option value="Bulgare">Bulgarie</option>
+                                    <option value="Burkinabée">Burkina Faso</option>
+                                    <option value="Burundaise">Burundi</option>
+                                    <option value="Cambodgienne">Cambodge</option>
+                                    <option value="Camerounaise">Cameroun</option>
+                                    <option value="Canadienne">Canada</option>
+                                    <option value="Cap-verdienne">Cap-Vert</option>
+                                    <option value="Centrafricaine">République centrafricaine</option>
+                                    <option value="Chilienne">Chili</option>
+                                    <option value="Chinoise">Chine</option>
+                                    <option value="Chypriote">Chypre</option>
+                                    <option value="Colombienne">Colombie</option>
+                                    <option value="Comorienne">Comores</option>
+                                    <option value="Congolaise">Congo</option>
+                                    <option value="Nord-coréenne">Corée du Nord</option>
+                                    <option value="Sud-coréenne">Corée du Sud</option>
+                                    <option value="Costaricienne">Costa Rica</option>
+                                    <option value="Ivoirienne">Côte d'Ivoire</option>
+                                    <option value="Croate">Croatie</option>
+                                    <option value="Cubaine">Cuba</option>
+                                    <option value="Danoise">Danemark</option>
+                                    <option value="Djiboutienne">Djibouti</option>
+                                    <option value="Dominicaine">République dominicaine</option>
+                                    <option value="Égyptienne">Égypte</option>
+                                    <option value="Émirienne">Émirats arabes unis</option>
+                                    <option value="Équatorienne">Équateur</option>
+                                    <option value="Érythréenne">Érythrée</option>
+                                    <option value="Espagnole">Espagne</option>
+                                    <option value="Estonienne">Estonie</option>
+                                    <option value="Éthiopienne">Éthiopie</option>
+                                    <option value="Fidjienne">Fidji</option>
+                                    <option value="Finlandaise">Finlande</option>
+                                    <option value="Française">France</option>
+                                    <option value="Gabonaise">Gabon</option>
+                                    <option value="Gambienne">Gambie</option>
+                                    <option value="Géorgienne">Géorgie</option>
+                                    <option value="Ghanéenne">Ghana</option>
+                                    <option value="Grecque">Grèce</option>
+                                    <option value="Grenadienne">Grenade</option>
+                                    <option value="Guatémaltèque">Guatemala</option>
+                                    <option value="Guinéenne">Guinée</option>
+                                    <option value="Guyanienne">Guyana</option>
+                                    <option value="Haïtienne">Haïti</option>
+                                    <option value="Hondurienne">Honduras</option>
+                                    <option value="Hongroise">Hongrie</option>
+                                    <option value="Indienne">Inde</option>
+                                    <option value="Indonésienne">Indonésie</option>
+                                    <option value="Irakienne">Irak</option>
+                                    <option value="Iranienne">Iran</option>
+                                    <option value="Irlandaise">Irlande</option>
+                                    <option value="Islandaise">Islande</option>
+                                    <option value="Israélienne">Israël</option>
+                                    <option value="Italienne">Italie</option>
+                                    <option value="Jamaïcaine">Jamaïque</option>
+                                    <option value="Japonaise">Japon</option>
+                                    <option value="Jordanienne">Jordanie</option>
+                                    <option value="Kazakhstanaise">Kazakhstan</option>
+                                    <option value="Kényane">Kenya</option>
+                                    <option value="Kirghize">Kirghizistan</option>
+                                    <option value="Koweïtienne">Koweït</option>
+                                    <option value="Laotienne">Laos</option>
+                                    <option value="Lesothane">Lesotho</option>
+                                    <option value="Lettone">Lettonie</option>
+                                    <option value="Libanaise">Liban</option>
+                                    <option value="Libérienne">Libéria</option>
+                                    <option value="Libyenne">Libye</option>
+                                    <option value="Liechtensteinoise">Liechtenstein</option>
+                                    <option value="Lituanienne">Lituanie</option>
+                                    <option value="Luxembourgeoise">Luxembourg</option>
+                                    <option value="Macédonienne">Macédoine du Nord</option>
+                                    <option value="Malgache">Madagascar</option>
+                                    <option value="Malaisienne">Malaisie</option>
+                                    <option value="Malawienne">Malawi</option>
+                                    <option value="Maldivienne">Maldives</option>
+                                    <option value="Malienne">Mali</option>
+                                    <option value="Maltaise">Malte</option>
+                                    <option value="Marocaine">Maroc</option>
+                                    <option value="Mauricienne">Maurice</option>
+                                    <option value="Mauritannienne">Mauritanie</option>
+                                    <option value="Mexicaine">Mexique</option>
+                                    <option value="Moldave">Moldavie</option>
+                                    <option value="Monégasque">Monaco</option>
+                                    <option value="Mongole">Mongolie</option>
+                                    <option value="Monténégrine">Monténégro</option>
+                                    <option value="Mozambicaine">Mozambique</option>
+                                    <option value="Namibienne">Namibie</option>
+                                    <option value="Népalaise">Népal</option>
+                                    <option value="Nicaraguayenne">Nicaragua</option>
+                                    <option value="Nigérienne">Niger</option>
+                                    <option value="Nigériane">Nigéria</option>
+                                    <option value="Norvégienne">Norvège</option>
+                                    <option value="Néo-Zélandaise">Nouvelle-Zélande</option>
+                                    <option value="Omanaise">Oman</option>
+                                    <option value="Ougandaise">Ouganda</option>
+                                    <option value="Ouzbèke">Ouzbékistan</option>
+                                    <option value="Pakistanaise">Pakistan</option>
+                                    <option value="Palestinienne">Palestine</option>
+                                    <option value="Panaméenne">Panama</option>
+                                    <option value="Paraguayenne">Paraguay</option>
+                                    <option value="Néerlandaise">Pays-Bas</option>
+                                    <option value="Péruvienne">Pérou</option>
+                                    <option value="Philippine">Philippines</option>
+                                    <option value="Polonaise">Pologne</option>
+                                    <option value="Portugaise">Portugal</option>
+                                    <option value="Qatarienne">Qatar</option>
+                                    <option value="Roumaine">Roumanie</option>
+                                    <option value="Britannique">Royaume-Uni</option>
+                                    <option value="Russe">Russie</option>
+                                    <option value="Rwandaise">Rwanda</option>
+                                    <option value="Salvadorienne">Salvador</option>
+                                    <option value="Sénégalaise">Sénégal</option>
+                                    <option value="Serbe">Serbie</option>
+                                    <option value="Seychelloise">Seychelles</option>
+                                    <option value="Singapourienne">Singapour</option>
+                                    <option value="Slovaque">Slovaquie</option>
+                                    <option value="Slovène">Slovénie</option>
+                                    <option value="Somalienne">Somalie</option>
+                                    <option value="Soudanaise">Soudan</option>
+                                    <option value="Sri-Lankaise">Sri Lanka</option>
+                                    <option value="Suédoise">Suède</option>
+                                    <option value="Suisse">Suisse</option>
+                                    <option value="Syrienne">Syrie</option>
+                                    <option value="Tadjike">Tadjikistan</option>
+                                    <option value="Taïwanaise">Taïwan</option>
+                                    <option value="Tanzanienne">Tanzanie</option>
+                                    <option value="Tchadienne">Tchad</option>
+                                    <option value="Tchèque">Tchéquie</option>
+                                    <option value="Thaïlandaise">Thaïlande</option>
+                                    <option value="Togolaise">Togo</option>
+                                    <option value="Tunisienne">Tunisie</option>
+                                    <option value="Turque">Turquie</option>
+                                    <option value="Ukrainienne">Ukraine</option>
+                                    <option value="Uruguayenne">Uruguay</option>
+                                    <option value="Vénézuélienne">Venezuela</option>
+                                    <option value="Vietnamienne">Vietnam</option>
+                                    <option value="Yéménite">Yémen</option>
+                                    <option value="Zambienne">Zambie</option>
+                                    <option value="Zimbabwéenne">Zimbabwe</option>
+                                </select>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="custom-label">Biographie (Bio)</label>
+                                <input type="text" id="authorBio" class="custom-input" placeholder="Brève biographie">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="custom-label">Photo de l'auteur</label>
+                                <input type="file" id="authorPhoto" class="custom-input" accept="image/*">
+                            </div>
+                            <div class="col-md-12 text-center">
+                                <button type="submit" class="btn-plezi" style="background-color: #198754;">Enregistrer l'auteur</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="publisherModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body p-0">
+                    <div class="custom-form-card shadow-none m-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="form-title mb-0">Nouvel Éditeur 🏢</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="publisherForm" class="row g-4">
+                            <div class="col-12">
+                                <label class="custom-label">Nom de la maison*</label>
+                                <input type="text" id="pubName" class="custom-input" placeholder="Ex: Gallimard" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="custom-label">Adresse du siège</label>
+                                <input type="text" id="pubAddress" class="custom-input" placeholder="Ex: Paris, France">
+                            </div>
+                            <div class="col-12">
+                                <label class="custom-label">Contact (Tel/Email)</label>
+                                <input type="text" id="pubContact" class="custom-input" placeholder="Ex: contact@editeur.com">
+                            </div>
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn-plezi" style="background: #0dcaf0;">Enregistrer</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="loanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body p-0">
+                    <div class="custom-form-card shadow-none m-0">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="form-title mb-0">Nouvel Emprunt 📖</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form id="loanForm" class="row g-4">
+                            <div class="col-12">
+                                <label class="custom-label">Livre à emprunter*</label>
+                                <select id="loanBook" class="custom-input" required></select>
+                            </div>
+                            <div class="col-12">
+                                <label class="custom-label">Nom de l'emprunteur*</label>
+                                <input type="text" id="borrowerName" class="custom-input" placeholder="Ex: Jean Dupont" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="custom-label">Numéro de téléphone*</label>
+                                <input type="tel" id="borrowerPhone" class="custom-input" placeholder="Ex: 06 12 34 56 78" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Date d'emprunt*</label>
+                                <input type="date" id="loanDate" class="custom-input" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="custom-label">Date de retour*</label>
+                                <input type="date" id="returnDate" class="custom-input" required>
+                            </div>
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn-plezi" style="background: #ffc107;">Valider l'emprunt</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editModalLabel"><i class="fas fa-edit me-2"></i>Modifier les informations</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="editForm">
+                        <input type="hidden" id="editId">
+                        <input type="hidden" id="editType">
+                        <div id="editFieldsContainer" class="row g-3"></div>
+                        <div class="d-grid mt-4">
+                            <button type="submit" class="btn btn-primary fw-bold">Enregistrer les modifications</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="inspectBookModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-book-open me-2"></i>Détails du livre
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div id="inspectBookContent" class="row g-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
